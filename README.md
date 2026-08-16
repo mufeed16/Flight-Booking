@@ -59,7 +59,7 @@ cd backend
 cp .env.example .env
 # Edit .env: set DATABASE_URL, JWT secrets, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 npm install
-npm run migrate     # creates tables
+npm run migrate     # creates tables (runs ts-node src/db/migrate.ts)
 npm run seed        # inserts 10 mock flights + 2 users
 npm run dev         # starts on http://localhost:4000
 ```
@@ -117,8 +117,8 @@ After seeding:
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/register` | — | Create account, returns tokens |
-| POST | `/login` | — | Login, returns tokens |
+| POST | `/register` | — | Create account, returns tokens + user data |
+| POST | `/login` | — | Login, returns tokens + user data |
 | POST | `/refresh` | — | Rotate refresh token |
 | POST | `/logout` | — | Revoke refresh token |
 | GET | `/me` | Bearer | Current user |
@@ -138,6 +138,7 @@ After seeding:
 | GET | `/` | Bearer | List my bookings |
 | GET | `/:id` | Bearer | Booking detail |
 | POST | `/:id/cancel` | Bearer | Cancel + refund |
+| POST | `/:id/simulate-payment` | Bearer | Simulate Stripe webhook delivery (demo) |
 | POST | `/stripe/webhook` | Stripe sig | Webhook handler |
 
 ### Admin (`/api/admin`)
