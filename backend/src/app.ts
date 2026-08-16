@@ -4,7 +4,7 @@ import cors from 'cors';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { config } from './config';
-import { errorHandler } from './middleware/error';
+import { errorMiddleware } from './middleware/error';
 import authRoutes from './modules/auth/auth.routes';
 import flightRoutes from './modules/flights/flight.routes';
 import bookingRoutes from './modules/bookings/booking.routes';
@@ -53,7 +53,7 @@ export function createApp() {
     res.status(404).json({ success: false, error: { message: 'Route not found' } });
   });
 
-  app.use(errorHandler);
+  app.use(errorMiddleware);
 
   return app;
 }

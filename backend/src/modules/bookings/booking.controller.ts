@@ -40,3 +40,16 @@ export async function cancel(req: Request, res: Response) {
   const booking = await bookingService.cancelBooking(id, userId, isAdmin);
   return ok(res, booking);
 }
+
+// Demo helper: simulates a successful Stripe webhook delivery for the booking.
+// In production, the webhook is the source of truth — this endpoint exists so
+// the demo frontend can complete a booking without a real Stripe round-trip.
+// It only works for bookings owned by the caller and only when status is 'pending'.
+export async function simulatePayment(req: Request, res: Response) {
+  const userId = req.user!.id;
+  const id = Number(req.params.id);
+  if (!id) throw new HttpError(400, 'Invalid booking id', 'VALIDATION_ERROR');
+  const { paymentIntentId, status } = (req as any).validatedBody;
+  const booking = await bookingService.simulatePaymentForBooking(userId, id, paymentIntentId, status);
+  return ok(res, booking);
+}

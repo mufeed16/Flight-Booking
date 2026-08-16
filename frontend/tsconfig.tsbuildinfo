@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/context/authcontext.tsx","./src/pages/adminbookingspage.tsx","./src/pages/admindashboardpage.tsx","./src/pages/adminflightspage.tsx","./src/pages/bookingpage.tsx","./src/pages/loginpage.tsx","./src/pages/mybookingspage.tsx","./src/pages/registerpage.tsx","./src/pages/searchpage.tsx"],"version":"5.9.3"}

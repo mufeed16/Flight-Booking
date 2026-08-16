@@ -155,6 +155,59 @@ export async function confirmBookingByPaymentIntent(paymentIntentId: string): Pr
   }
 }
 
+// Demo helper: lets the frontend simulate a Stripe webhook delivery for a
+// booking it owns. In production this path is never hit — the webhook is the
+// source of truth. We still go through the same idempotent confirm/fail logic
+// so the demo exercises the real code paths.
+export async function simulatePaymentForBooking(
+  userId: number,
+  bookingId: number,
+  paymentIntentId: string,
+  status: 'succeeded' | 'failed'
+): Promise<BookingDTO> {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const res = await client.query<BookingRow>(
+      'SELECT * FROM bookings WHERE id = $1 FOR UPDATE',
+      [bookingId]
+    );
+    const booking = res.rows[0];
+    if (!booking) {
+      await client.query('ROLLBACK');
+      throw new HttpError(404, 'Booking not found', 'NOT_FOUND');
+    }
+    if (booking.user_id !== userId) {
+      await client.query('ROLLBACK');
+      throw new HttpError(404, 'Booking not found', 'NOT_FOUND');
+    }
+    if (booking.stripe_payment_intent_id !== paymentIntentId) {
+      await client.query('ROLLBACK');
+      throw new HttpError(400, 'Payment intent does not match booking', 'VALIDATION_ERROR');
+    }
+    if (booking.status !== 'pending') {
+      await client.query('ROLLBACK');
+      throw new HttpError(400, `Booking is already ${booking.status}`, 'INVALID_STATE');
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  if (status === 'succeeded') {
+    await confirmBookingByPaymentIntent(paymentIntentId);
+  } else {
+    await failBookingByPaymentIntent(paymentIntentId);
+  }
+
+  const updated = await getBookingForUser(userId, bookingId);
+  if (!updated) throw new HttpError(404, 'Booking not found', 'NOT_FOUND');
+  return updated;
+}
+
 // Mark a booking as failed (e.g. payment failed) and release the held seats.
 export async function failBookingByPaymentIntent(paymentIntentId: string): Promise<void> {
   const client = await db.connect();

@@ -63,7 +63,17 @@ export async function register(email: string, password: string, fullName: string
     [email, hash, fullName]
   );
   const user = result.rows[0];
-  return issueTokens(user);
+  const tokens = await issueTokens(user);
+  return {
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name,
+      role: user.role,
+    },
+  };
 }
 
 export async function login(email: string, password: string) {
@@ -75,7 +85,17 @@ export async function login(email: string, password: string) {
   if (!user) throw new HttpError(401, 'Invalid credentials', 'INVALID_CREDENTIALS');
   const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) throw new HttpError(401, 'Invalid credentials', 'INVALID_CREDENTIALS');
-  return issueTokens(user);
+  const tokens = await issueTokens(user);
+  return {
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name,
+      role: user.role,
+    },
+  };
 }
 
 async function issueTokens(user: UserRow): Promise<AuthTokens> {
@@ -88,7 +108,7 @@ async function issueTokens(user: UserRow): Promise<AuthTokens> {
   return { accessToken, refreshToken };
 }
 
-export async function rotateRefresh(refreshToken: string): Promise<AuthTokens> {
+export async function rotateRefresh(refreshToken: string) {
   let payload: any;
   try {
     payload = jwt.verify(refreshToken, config.jwt.refreshSecret);
@@ -114,7 +134,17 @@ export async function rotateRefresh(refreshToken: string): Promise<AuthTokens> {
   );
   const user = userRes.rows[0];
   if (!user) throw new HttpError(401, 'User no longer exists', 'INVALID_REFRESH');
-  return issueTokens(user);
+  const tokens = await issueTokens(user);
+  return {
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name,
+      role: user.role,
+    },
+  };
 }
 
 export async function logout(refreshToken: string) {

@@ -25,9 +25,20 @@ const listSchema = z.object({
   limit: z.string().optional(),
 });
 
+const simulatePaymentSchema = z.object({
+  paymentIntentId: z.string().min(1),
+  status: z.enum(['succeeded', 'failed']),
+});
+
 router.post('/', authMiddleware, validateBody(createSchema), ctrl.create);
 router.get('/', authMiddleware, validateQuery(listSchema), ctrl.listMine);
 router.get('/:id', authMiddleware, ctrl.getOne);
 router.post('/:id/cancel', authMiddleware, ctrl.cancel);
+router.post(
+  '/:id/simulate-payment',
+  authMiddleware,
+  validateBody(simulatePaymentSchema),
+  ctrl.simulatePayment
+);
 
 export default router;
